@@ -1,103 +1,160 @@
-import Image from "next/image";
+'use client'
+import Button from "@/components/Button";
+import Checkbox from "@/components/Checkbox";
+import Input from "@/components/Input"
+import Modal from "@/components/Modal";
+import Textarea from "@/components/Textarea";
+import { SymptomsForm, SymptomsFormErrors } from "@/utils/types";
+import { validationsForm } from "@/utils/validationsForm";
+import { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const [isOpen, setIsOpen] = useState(false);
+  const [painLevel, setPainLevel] = useState(1);
+  const [errors, setErrors] = useState<Partial<SymptomsFormErrors>>({});
+  const [formData, setFormData] = useState<SymptomsForm>({
+    name: "", age: "", headache: false, fever: false, cough: false, soreThroat: false, nasalCongestion: false, otherSymptoms: ""
+  });
+
+  const handleInputChange = (value: string | boolean, field: keyof SymptomsForm) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const validationErrors = validationsForm(formData);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length === 0) {
+
+      //Limpiamos el formulario y el nivel de dolor
+      setFormData({ name: "", age: "", headache: false, fever: false, cough: false, soreThroat: false, nasalCongestion: false, otherSymptoms: "" });
+      setPainLevel(1);
+
+      // Abrimos el modal
+      setIsOpen(true);
+    }
+  }
+
+  return (
+    <div className="px-3 mb-8 min-h-screen z-40">
+      <div className="flex flex-col items-center mb-8">
+        <h1 className="text-2xl font-semibold">Registro de síntomas</h1>
+      </div>
+
+      {/* Formulario */}
+      <div className="grid gap-6 p-5 rounded-lg shadow-2xl inset-shadow-2xs max-w-3xl mx-auto">
+        <form className="grid gap-7">
+
+          {/* Información básica */}
+          <div>
+            <h2 className="mt-4 text-xl font-semibold">Información básica</h2>
+            <div className="bg-gray-200 h-px mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Nombre completo"
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange(e, "name")}
+                error={errors.name}
+              />
+              <Input
+                label="Edad"
+                type="number"
+                value={formData.age}
+                onChange={(e) => handleInputChange(e, "age")}
+                error={errors.age as string}
+              />
+            </div>
+          </div>
+
+          {/* Sintomas */}
+          <div>
+            <h2 className="text-xl font-semibold">Síntomas</h2>
+            <div className="bg-gray-200 h-px mb-6"></div>
+            <p className="mb-1">Seleccione sus síntomas</p>
+            <div className="grid gap-1 mb-6">
+              <Checkbox
+                label="Tos"
+                checked={formData.cough as boolean}
+                onChange={(e) => handleInputChange(e, "cough")}
+              />
+              <Checkbox
+                label="Fiebre"
+                checked={formData.fever as boolean}
+                onChange={(e) => handleInputChange(e, "fever")}
+              />
+              <Checkbox
+                label="Dolor de cabeza"
+                checked={formData.headache as boolean}
+                onChange={(e) => handleInputChange(e, "headache")}
+              />
+              <Checkbox
+                label="Congestión nasal"
+                checked={formData.nasalCongestion as boolean}
+                onChange={(e) => handleInputChange(e, "nasalCongestion")}
+              />
+              <Checkbox
+                label="Dolor de garganta"
+                checked={formData.soreThroat as boolean}
+                onChange={(e) => handleInputChange(e, "soreThroat")}
+              />
+              {(errors.headache || errors.fever || errors.cough) && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.headache || errors.fever || errors.cough}
+                </p>
+              )}
+            </div>
+
+            {/* Nivel de dolor */}
+            <div className="w-full bg-white">
+              <label className="text-sm font-medium text-gray-700">Nivel de dolor (1 - 10)</label>
+              <input
+                id="painLevel"
+                type="range"
+                min={1}
+                max={10}
+                value={painLevel}
+                onChange={(e) => setPainLevel(Number(e.target.value))}
+                className="w-full cursor-pointer accent-blue-600 hover:accent-blue-600"
+              />
+              <div className="flex justify-between text-sm font-medium text-gray-700">
+                <span>1(Bajo)</span>
+                <span>10(Alto)</span>
+              </div>
+              <div className="flex justify-center mt-2 text-white text-xl">
+                <h3 className="flex w-12 h-12 items-center justify-center rounded-full bg-blue-600">{painLevel}</h3>
+              </div>
+            </div>
+          </div>
+
+          {/* Otros síntomas */}
+          <div className="flex- flex-col">
+            <Textarea
+              label="Otros síntomas(opcional)"
+              rows={4}
+              error={errors.otherSymptoms}
+              value={formData.otherSymptoms}
+              onChange={(e) => handleInputChange(e, "otherSymptoms")}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          </div>
+
+          {/* Botón para enviar el formulario */}
+          <Button text="Enviar" onClick={handleSubmit} />
+        </form>
+      </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Datos enviados con exito"
+      />
     </div>
   );
 }
